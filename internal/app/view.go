@@ -206,9 +206,8 @@ func (m Model) View() string {
 		lines = append(lines, nil)
 		if m.mode == modeClock {
 			dateText := strings.ToUpper(m.now.Format("Mon, Jan 2 2006"))
-			clockText := m.now.Format("15:04:05")
 			lines = append(lines, []segment{{text: dateText, style: cellStyle{fg: m.theme.Dim}}})
-			lines = append(lines, []segment{{text: clockText, style: cellStyle{fg: m.theme.Dim2}}})
+			lines = append(lines, []segment{{text: m.statusText(), style: statusStyle}})
 		} else {
 			statusText := m.statusText()
 			if blinkHidden {
