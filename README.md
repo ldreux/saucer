@@ -30,6 +30,19 @@ Via Homebrew (macOS, arm64 and amd64):
 brew install ldreux/saucer/saucer
 ```
 
+### Troubleshooting: "cannot be opened because the developer cannot be verified"
+
+`saucer` binaries are ad-hoc signed but not notarized by Apple (notarization requires a
+paid Apple Developer Program membership). If you downloaded the release tarball directly
+from GitHub (rather than via `brew install`), macOS may flag the binary on first run. To
+resolve:
+
+```sh
+xattr -d com.apple.quarantine ./saucer
+```
+
+or, via Finder: right-click the binary → **Open** → **Open** again in the confirmation dialog.
+
 ### Build from source
 
 Requires Go (version pinned in `go.mod`). [Task](https://taskfile.dev) is used for build automation but isn't
