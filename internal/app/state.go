@@ -7,13 +7,13 @@ import (
 )
 
 // PersistedState is the small slice of app state remembered across
-// restarts: last-used mode, theme, weather setting, and whether the bottom
-// bar/status text is hidden. Nothing else (running timers) is persisted.
+// restarts: last-used mode, theme, weather setting, and compact level.
+// Nothing else (running timers) is persisted.
 type PersistedState struct {
-	Mode    string `json:"mode"`
-	Theme   string `json:"theme"`
-	Weather string `json:"weather"`
-	Compact bool   `json:"compact"`
+	Mode         string `json:"mode"`
+	Theme        string `json:"theme"`
+	Weather      string `json:"weather"`
+	CompactLevel string `json:"compactLevel"`
 }
 
 func statePath() (string, error) {
@@ -26,8 +26,8 @@ func statePath() (string, error) {
 
 // LoadState is best-effort: a missing file, unreadable file, or corrupt
 // JSON, or an old file predating a field (which just zero-values that
-// field, e.g. Compact defaulting to false) all mean "no saved state for
-// that part" — never a startup failure.
+// field, e.g. CompactLevel defaulting to "" and resolving to levelFull)
+// all mean "no saved state for that part" — never a startup failure.
 func LoadState() PersistedState {
 	path, err := statePath()
 	if err != nil {
@@ -44,7 +44,7 @@ func LoadState() PersistedState {
 	return s
 }
 
-// ApplyPersistedState applies a previously saved mode/weather/compact
+// ApplyPersistedState applies a previously saved mode/weather/compact-level
 // preference on top of a freshly constructed Model. Unrecognized or empty
 // values are left at whatever New already set.
 func (m *Model) ApplyPersistedState(s PersistedState) {
@@ -54,7 +54,9 @@ func (m *Model) ApplyPersistedState(s PersistedState) {
 	if we, ok := weatherKindFromString(s.Weather); ok {
 		m.weather = we
 	}
-	m.compact = s.Compact
+	if lvl, ok := compactLevelFromString(s.CompactLevel); ok {
+		m.compactLevel = lvl
+	}
 }
 
 // saveState is best-effort: any error (no config dir, permissions, disk
@@ -69,10 +71,10 @@ func saveState(m Model) {
 		return
 	}
 	data, err := json.Marshal(PersistedState{
-		Mode:    m.mode.String(),
-		Theme:   m.theme.Name,
-		Weather: m.weather.String(),
-		Compact: m.compact,
+		Mode:         m.mode.String(),
+		Theme:        m.theme.Name,
+		Weather:      m.weather.String(),
+		CompactLevel: m.compactLevel.String(),
 	})
 	if err != nil {
 		return
@@ -104,4 +106,16 @@ func weatherKindFromString(s string) (weatherKind, bool) {
 		return weatherSnow, true
 	}
 	return weatherOff, false
+}
+
+func compactLevelFromString(s string) (compactLevel, bool) {
+	switch s {
+	case "full":
+		return levelFull, true
+	case "compact":
+		return levelCompact, true
+	case "verycompact":
+		return levelVeryCompact, true
+	}
+	return levelFull, false
 }

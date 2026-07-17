@@ -12,13 +12,15 @@ Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com
 - Big time readout rendered as 5×5 dot-matrix block digits (no plain terminal text — reads as genuinely large).
 - Seven color themes, cycled live with `Tab` / `Shift+Tab`: ocean, sunset, matrix, banana, bubblegum, vaporwave, toxic.
 - Optional ambient background effect — off / rain / snow — cycled with `w`.
-- Compact mode (`b`) collapses the display down to just the big digits, hiding status line, dots/hint, date, and the
-  bottom bar.
+- Three display levels, cycled with `b`: **full** (everything), **compact** (hides the bottom bar, keeps 2 lines
+  below the digits scoped to the current mode — status + round dots in Pomodoro, status + adjust-duration hint in
+  Countdown, status only in Timer, date + clock in Clock mode), and **very compact** (just the big digits, nothing
+  else).
 - Pomodoro phase completion fires a terminal bell and a best-effort macOS desktop notification (via `osascript`; a
   silent no-op on other platforms).
 - Pomodoro/Countdown/Timer state is shared live across every concurrently running instance (via a session file), so
   starting a timer in one window shows it running in another.
-- Last-used mode, theme, weather, and compact setting persist across restarts.
+- Last-used mode, theme, weather, and compact level persist across restarts.
 
 ## Install
 
@@ -67,7 +69,7 @@ go build -o bin/saucer .
 | `p` / `c` / `t` / `k` | Switch to Pomodoro / Countdown / Timer / Clock                                                                    |
 | `←` / `→`             | Pomodoro only: manually switch Work ↔ Break phase (round counter unaffected)                                      |
 | `↑`/`+`, `↓`/`-`      | Countdown: adjust duration ±1 min (only while paused). Pomodoro: adjust remaining time ±1 min (running or paused) |
-| `b`                   | Toggle compact mode (hide everything but the big digits)                                                          |
+| `b`                   | Cycle display level: full → compact (hides bottom bar, keeps 2 mode-scoped info lines) → very compact (big digits only) |
 | `w`                   | Cycle ambient weather: off → rain → snow → off                                                                    |
 | `Tab` / `Shift+Tab`   | Cycle color theme forward/backward                                                                                |
 | `q` / `Ctrl+C`        | Quit                                                                                                              |
@@ -86,7 +88,8 @@ go build -o bin/saucer .
 
 Two separate files under the OS config dir (e.g. `~/Library/Application Support/saucer/` on macOS):
 
-- `state.json` — per-user preferences (mode, theme, weather, compact), read once at startup and written on keypress.
+- `state.json` — per-user preferences (mode, theme, weather, compact level), read once at startup and written on
+  keypress.
 - `session.json` — the live, shared Pomodoro/Countdown/Timer state, polled continuously and written on every
   transition so concurrently running instances stay in sync.
 

@@ -45,6 +45,37 @@ func (m mode) String() string {
 	return ""
 }
 
+// compactLevel controls how much of the display is shown, cycled with 'b'.
+type compactLevel int
+
+const (
+	levelFull compactLevel = iota
+	levelCompact
+	levelVeryCompact
+)
+
+func nextCompactLevel(l compactLevel) compactLevel {
+	switch l {
+	case levelFull:
+		return levelCompact
+	case levelCompact:
+		return levelVeryCompact
+	default:
+		return levelFull
+	}
+}
+
+func (l compactLevel) String() string {
+	switch l {
+	case levelCompact:
+		return "compact"
+	case levelVeryCompact:
+		return "verycompact"
+	default:
+		return "full"
+	}
+}
+
 type phase int
 
 const (
@@ -87,9 +118,9 @@ func phaseFromString(s string) (phase, bool) {
 type Model struct {
 	theme      Theme
 	mode       mode
-	showFooter bool
-	compact    bool // hides the status line, dots/hint/date, and the bottom bar
-	weather    weatherKind
+	showFooter   bool
+	compactLevel compactLevel // full / compact / very compact — see compactLevel type
+	weather      weatherKind
 
 	now         time.Time
 	startTime   time.Time
@@ -479,7 +510,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.adjustCountdown(-1)
 		m.adjustPomodoro(-1)
 	case "b", "B":
-		m.compact = !m.compact
+		m.compactLevel = nextCompactLevel(m.compactLevel)
 	case "w", "W":
 		m.weather = nextWeather(m.weather)
 	case "tab":

@@ -127,6 +127,26 @@ func (m Model) statusText() string {
 	return label + " · PAUSED"
 }
 
+// pomoDotsSegments builds the row-of-roundsPerCycle progress dots (●/○)
+// reflecting the Pomodoro session's own round count, independent of m.mode.
+func (m Model) pomoDotsSegments() []segment {
+	completed := (m.pomoRound - 1) % roundsPerCycle
+	filled := cellStyle{fg: m.theme.FG}
+	hollow := cellStyle{fg: m.theme.Dim}
+	var segs []segment
+	for i := 0; i < roundsPerCycle; i++ {
+		if i > 0 {
+			segs = append(segs, segment{text: "  "})
+		}
+		if i < completed {
+			segs = append(segs, segment{text: "●", style: filled})
+		} else {
+			segs = append(segs, segment{text: "○", style: hollow})
+		}
+	}
+	return segs
+}
+
 func (m Model) View() string {
 	canvas := m.canvas
 	canvas.Reset(m.width, m.height)
@@ -151,12 +171,13 @@ func (m Model) View() string {
 		lines = append(lines, []segment{{text: text, style: bigStyle}})
 	}
 
-	// Secondary line (date, clock mode only) and extra line (dots/hint) are
-	// always reserved, blank when not applicable, so the header block is the
-	// same height in every mode and doesn't shift the big time around.
-	// In compact mode ('b') this whole block and the footer are omitted
-	// entirely, shrinking the total rendered height down to just the digits.
-	if !m.compact {
+	// Secondary/status/extra lines are always reserved, blank when not
+	// applicable, so the header block is the same height regardless of mode
+	// and doesn't shift the big time around. levelVeryCompact omits this
+	// whole block and the footer, shrinking the total rendered height down
+	// to just the digits.
+	switch m.compactLevel {
+	case levelFull:
 		secondaryText := ""
 		if m.mode == modeClock {
 			secondaryText = strings.ToUpper(m.now.Format("Mon, Jan 2 2006"))
@@ -172,28 +193,43 @@ func (m Model) View() string {
 
 		var extraSegs []segment
 		if m.mode == modePomodoro {
-			completed := (m.pomoRound - 1) % roundsPerCycle
-			filled := cellStyle{fg: m.theme.FG}
-			hollow := cellStyle{fg: m.theme.Dim}
-			for i := 0; i < roundsPerCycle; i++ {
-				if i > 0 {
-					extraSegs = append(extraSegs, segment{text: "  "})
-				}
-				if i < completed {
-					extraSegs = append(extraSegs, segment{text: "●", style: filled})
-				} else {
-					extraSegs = append(extraSegs, segment{text: "○", style: hollow})
-				}
-			}
-		} else if m.mode == modeCountdown && !m.currentRunning() {
+			extraSegs = m.pomoDotsSegments()
+		} else if m.mode == modeCountdown && !m.countdownRunning {
 			extraSegs = []segment{{text: "[ ↑ / ↓ ] adjust duration", style: cellStyle{fg: m.theme.Dim}}}
 		}
 		lines = append(lines, extraSegs)
+
+	case levelCompact:
+		// Exactly 2 lines below the digits, scoped to the current mode only
+		// (unlike levelFull's secondary line, this isn't reserved-blank
+		// across modes — each mode gets its own fixed pair of lines).
+		lines = append(lines, nil)
+		if m.mode == modeClock {
+			dateText := strings.ToUpper(m.now.Format("Mon, Jan 2 2006"))
+			clockText := m.now.Format("15:04:05")
+			lines = append(lines, []segment{{text: dateText, style: cellStyle{fg: m.theme.Dim}}})
+			lines = append(lines, []segment{{text: clockText, style: cellStyle{fg: m.theme.Dim2}}})
+		} else {
+			statusText := m.statusText()
+			if blinkHidden {
+				statusText = ""
+			}
+			lines = append(lines, []segment{{text: statusText, style: statusStyle}})
+
+			var extraSegs []segment
+			switch m.mode {
+			case modePomodoro:
+				extraSegs = m.pomoDotsSegments()
+			case modeCountdown:
+				extraSegs = []segment{{text: "[ ↑ / ↓ ] adjust duration", style: cellStyle{fg: m.theme.Dim}}}
+			}
+			lines = append(lines, extraSegs)
+		}
 	}
 
 	footerSegs := m.footerSegments()
 	totalHeight := len(lines)
-	if m.showFooter && !m.compact {
+	if m.showFooter && m.compactLevel == levelFull {
 		totalHeight += 2 // blank gap + footer row
 	}
 	topOffset := (m.height - totalHeight) / 2
@@ -206,7 +242,7 @@ func (m Model) View() string {
 		writeSegments(canvas, row, centerCol(m.width, segWidth(segs)), segs)
 	}
 
-	if m.showFooter && !m.compact {
+	if m.showFooter && m.compactLevel == levelFull {
 		row := topOffset + len(lines) + 1
 		writeSegments(canvas, row, centerCol(m.width, segWidth(footerSegs)), footerSegs)
 	}
