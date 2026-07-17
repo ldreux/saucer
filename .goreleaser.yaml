@@ -35,6 +35,7 @@ homebrew_casks:
     repository:
       owner: ldreux
       name: homebrew-saucer
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/ldreux/saucer"
     description: "Terminal Pomodoro / countdown / timer / clock app"
