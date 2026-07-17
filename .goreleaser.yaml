@@ -1,0 +1,40 @@
+version: 2
+
+project_name: saucer
+
+builds:
+  - main: .
+    binary: saucer
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [tar.gz]
+    files:
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+homebrew_casks:
+  - name: saucer
+    binaries:
+      - saucer
+    repository:
+      owner: ldreux
+      name: homebrew-saucer
+    directory: Casks
+    homepage: "https://github.com/ldreux/saucer"
+    description: "Terminal Pomodoro / countdown / timer / clock app"

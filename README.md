@@ -18,7 +18,15 @@ Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com
   starting a timer in one window shows it running in another.
 - Last-used mode, theme, weather, and compact setting persist across restarts.
 
-## Build / Install
+## Install
+
+Via Homebrew (macOS, arm64 and amd64):
+
+```sh
+brew install ldreux/saucer/saucer
+```
+
+### Build from source
 
 Requires Go (version pinned in `go.mod`). [Task](https://taskfile.dev) is used for build automation but isn't
 required — plain `go build` works too.
