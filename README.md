@@ -4,6 +4,8 @@ A terminal-based Pomodoro / countdown / timer / clock app. Big block-digit displ
 ambient rain/snow, and live state shared across multiple running windows. Built with [Bubble
 Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com/charmbracelet/lipgloss).
 
+![Saucer demo](demo.gif)
+
 ## Features
 
 - Four modes: **Pomodoro**, **Countdown**, **Timer** (stopwatch), **Clock**.
