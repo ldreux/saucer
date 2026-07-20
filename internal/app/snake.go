@@ -73,7 +73,9 @@ func (s *snakeState) ensure(width, height int, seed int64) {
 }
 
 func (s *snakeState) reset() {
-	s.rng = rand.New(rand.NewSource(s.seed))
+	if s.rng == nil {
+		s.rng = rand.New(rand.NewSource(s.seed))
+	}
 	s.lastStep = time.Time{}
 	if s.cols < 6 || s.height < 6 {
 		// Too small to place a snake — advance/render treat nil body as "skip".
