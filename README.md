@@ -26,24 +26,15 @@ multiple running windows. Built with [Bubble Tea](https://github.com/charmbracel
 
 ## Install
 
-Via Homebrew (macOS, arm64 and amd64):
+Requires Go (version pinned in `go.mod`):
 
 ```sh
-brew install ldreux/saucer/saucer
+git clone https://github.com/ldreux/saucer.git
+cd saucer
+go install .
 ```
 
-### Troubleshooting: "cannot be opened because the developer cannot be verified"
-
-`saucer` binaries are ad-hoc signed but not notarized by Apple (notarization requires a
-paid Apple Developer Program membership). If you downloaded the release tarball directly
-from GitHub (rather than via `brew install`), macOS may flag the binary on first run. To
-resolve:
-
-```sh
-xattr -d com.apple.quarantine ./saucer
-```
-
-or, via Finder: right-click the binary → **Open** → **Open** again in the confirmation dialog.
+This installs the `saucer` binary to `$GOBIN` (or `$HOME/go/bin` by default).
 
 ### Build from source
 
