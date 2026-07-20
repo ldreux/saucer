@@ -116,21 +116,21 @@ func phaseFromString(s string) (phase, bool) {
 // value, derived fresh from a shared (snapshot, startedAt) pair rather than
 // a locally-decremented counter — see liveRemaining/liveElapsed.
 type Model struct {
-	theme      Theme
-	mode       mode
+	theme        Theme
+	mode         mode
 	showFooter   bool
 	compactLevel compactLevel // full / compact / very compact — see compactLevel type
-	weather      weatherKind
+	bgAnim       bgAnimKind
 
-	now         time.Time
-	startTime   time.Time
-	weatherSeed int64
+	now        time.Time
+	startTime  time.Time
+	bgAnimSeed int64
 
-	// canvas and weatherCache are reused across frames (pointer fields, so
+	// canvas and bgAnimState are reused across frames (pointer fields, so
 	// mutating through them persists across Model's value-receiver copies)
 	// to avoid reallocating/recomputing on every render.
-	canvas       *Canvas
-	weatherCache *weatherCache
+	canvas      *Canvas
+	bgAnimState *bgAnimState
 
 	pomoPhase     phase
 	pomoRound     int
@@ -175,9 +175,9 @@ func New(themeName string, showFooter bool) Model {
 		showFooter:         showFooter,
 		now:                now,
 		startTime:          now,
-		weatherSeed:        now.UnixNano(),
+		bgAnimSeed:         now.UnixNano(),
 		canvas:             NewCanvas(80, 24),
-		weatherCache:       &weatherCache{},
+		bgAnimState:        newBgAnimState(),
 		pomoPhase:          phaseWork,
 		pomoRound:          1,
 		pomoRemaining:      workDuration,
@@ -512,7 +512,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "b", "B":
 		m.compactLevel = nextCompactLevel(m.compactLevel)
 	case "w", "W":
-		m.weather = nextWeather(m.weather)
+		m.bgAnim = nextBgAnim(m.bgAnim)
 	case "tab":
 		m.theme = nextTheme(m.theme.Name)
 	case "shift+tab":

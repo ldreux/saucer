@@ -1,8 +1,9 @@
 # Saucer
 
-A terminal-based Pomodoro / countdown / timer / clock app. Big block-digit display, seven color themes, optional
-ambient rain/snow, and live state shared across multiple running windows. Built with [Bubble
-Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com/charmbracelet/lipgloss).
+A terminal-based Pomodoro / countdown / timer / clock app. Big block-digit display, seven color themes, an optional
+ambient background animation (rain, a self-playing snake, or a self-playing tetris), and live state shared across
+multiple running windows. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) +
+[Lipgloss](https://github.com/charmbracelet/lipgloss).
 
 ![Saucer demo](demo.gif)
 
@@ -11,7 +12,8 @@ Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com
 - Four modes: **Pomodoro**, **Countdown**, **Timer** (stopwatch), **Clock**.
 - Big time readout rendered as 5×5 dot-matrix block digits (no plain terminal text — reads as genuinely large).
 - Seven color themes, cycled live with `Tab` / `Shift+Tab`: ocean, sunset, matrix, banana, bubblegum, vaporwave, toxic.
-- Optional ambient background effect — off / rain / snow — cycled with `w`.
+- Optional ambient background animation — off / rain / snake / tetris — cycled with `w`. Snake and tetris are
+  self-playing, deterministic simulations (no player input) that loop forever, matching rain's ambient feel.
 - Three display levels, cycled with `b`: **full** (everything), **compact** (hides the bottom bar, keeps 2 lines
   below the digits scoped to the current mode — status + round dots in Pomodoro, status + adjust-duration hint in
   Countdown, status only in Timer, date + clock in Clock mode), and **very compact** (just the big digits, nothing
@@ -20,7 +22,7 @@ Tea](https://github.com/charmbracelet/bubbletea) + [Lipgloss](https://github.com
   silent no-op on other platforms).
 - Pomodoro/Countdown/Timer state is shared live across every concurrently running instance (via a session file), so
   starting a timer in one window shows it running in another.
-- Last-used mode, theme, weather, and compact level persist across restarts.
+- Last-used mode, theme, background animation, and compact level persist across restarts.
 
 ## Install
 
@@ -83,7 +85,7 @@ go build -o bin/saucer .
 | `←` / `→`             | Pomodoro only: manually switch Work ↔ Break phase (round counter unaffected)                                      |
 | `↑`/`+`, `↓`/`-`      | Countdown: adjust duration ±1 min (only while paused). Pomodoro: adjust remaining time ±1 min (running or paused) |
 | `b`                   | Cycle display level: full → compact (hides bottom bar, keeps 2 mode-scoped info lines) → very compact (big digits only) |
-| `w`                   | Cycle ambient weather: off → rain → snow → off                                                                    |
+| `w`                   | Cycle ambient background animation: off → rain → snake → tetris → off                                             |
 | `Tab` / `Shift+Tab`   | Cycle color theme forward/backward                                                                                |
 | `q` / `Ctrl+C`        | Quit                                                                                                              |
 
@@ -101,8 +103,8 @@ go build -o bin/saucer .
 
 Two separate files under the OS config dir (e.g. `~/Library/Application Support/saucer/` on macOS):
 
-- `state.json` — per-user preferences (mode, theme, weather, compact level), read once at startup and written on
-  keypress.
+- `state.json` — per-user preferences (mode, theme, background animation, compact level), read once at startup and
+  written on keypress.
 - `session.json` — the live, shared Pomodoro/Countdown/Timer state, polled continuously and written on every
   transition so concurrently running instances stay in sync.
 
@@ -114,8 +116,10 @@ Both are best-effort: a missing or corrupt file is treated as "nothing saved yet
 - `internal/app/model.go` — Bubble Tea `Model`, timing logic, key handling.
 - `internal/app/view.go` — rendering: layout, status text, footer.
 - `internal/app/bigfont.go` — 5×5 dot-matrix digit/colon glyphs for the big time display.
-- `internal/app/canvas.go` — per-cell buffer compositing foreground text over the weather background.
-- `internal/app/weather.go` — ambient rain/snow effect.
+- `internal/app/canvas.go` — per-cell buffer compositing foreground text over the background animation.
+- `internal/app/bganim.go` — ambient rain effect plus the background-animation dispatcher/shared color helpers.
+- `internal/app/snake.go` — self-playing snake background animation.
+- `internal/app/tetris.go` — self-playing tetris background animation.
 - `internal/app/theme.go` — color theme definitions.
 - `internal/app/state.go` / `internal/app/session.go` — persisted preferences and shared live session, respectively.
 - `internal/app/notify.go` — bell + macOS desktop notification on Pomodoro completion.

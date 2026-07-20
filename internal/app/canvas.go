@@ -11,6 +11,7 @@ import (
 // can group consecutive same-styled cells into a single ANSI run.
 type cellStyle struct {
 	fg   lipgloss.Color
+	bg   lipgloss.Color
 	bold bool
 }
 
@@ -20,7 +21,7 @@ type cell struct {
 	set   bool
 }
 
-// Canvas is a per-cell buffer that lets a background layer (weather) and
+// Canvas is a per-cell buffer that lets a background layer (bg animation) and
 // foreground layer (time/status/footer text) be composited: foreground
 // writes skip literal spaces, so background cells show through gaps.
 type Canvas struct {
@@ -69,15 +70,29 @@ func (c *Canvas) Set(row, col int, ch rune, style cellStyle) {
 
 // WriteTextSkipSpaces writes text left-to-right starting at (row, col).
 // Literal space runes are skipped rather than overwriting the cell, so
-// anything already drawn there (e.g. a weather drop) remains visible.
+// anything already drawn there (e.g. a rain drop) remains visible. Where a
+// cell already holds background-layer content, that content's foreground
+// color carries over as this cell's background color, so a background
+// animation cell doesn't just vanish under foreground text — it stays
+// visible as a colored backdrop behind the character drawn on top of it.
 func (c *Canvas) WriteTextSkipSpaces(row, col int, text string, style cellStyle) {
 	i := 0
 	for _, r := range text {
 		if r != ' ' {
-			c.Set(row, col+i, r, style)
+			c.setForeground(row, col+i, r, style)
 		}
 		i++
 	}
+}
+
+func (c *Canvas) setForeground(row, col int, ch rune, style cellStyle) {
+	if row < 0 || row >= c.height || col < 0 || col >= c.width {
+		return
+	}
+	if existing := c.cells[row][col]; existing.set {
+		style.bg = existing.style.fg
+	}
+	c.cells[row][col] = cell{ch: ch, style: style, set: true}
 }
 
 // styleANSICache memoizes the ANSI escape prefix/suffix lipgloss produces
@@ -94,7 +109,7 @@ func ansiFor(style cellStyle) (prefix, suffix string) {
 	if cached, ok := styleANSICache[style]; ok {
 		return cached[0], cached[1]
 	}
-	rendered := lipgloss.NewStyle().Foreground(style.fg).Bold(style.bold).Render(ansiSentinel)
+	rendered := lipgloss.NewStyle().Foreground(style.fg).Background(style.bg).Bold(style.bold).Render(ansiSentinel)
 	idx := strings.Index(rendered, ansiSentinel)
 	if idx < 0 {
 		styleANSICache[style] = [2]string{"", ""}

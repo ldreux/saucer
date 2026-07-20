@@ -10,7 +10,7 @@ const footerContentWidth = 64
 
 // segment is a run of text with a single style; a line is built from one or
 // more segments so mixed-color rows (dots, footer) can be represented, then
-// written into the Canvas so the weather background shows through spaces.
+// written into the Canvas so the background animation shows through spaces.
 type segment struct {
 	text  string
 	style cellStyle
@@ -150,7 +150,7 @@ func (m Model) pomoDotsSegments() []segment {
 func (m Model) View() string {
 	canvas := m.canvas
 	canvas.Reset(m.width, m.height)
-	renderWeather(canvas, m.weather, m.theme, m.now.Sub(m.startTime), m.weatherSeed, m.weatherCache)
+	renderBgAnim(canvas, m.bgAnim, m.theme, m.now, m.now.Sub(m.startTime), m.bgAnimSeed, m.bgAnimState)
 
 	blinkHidden := m.currentFlashing() && !m.blinkOn()
 

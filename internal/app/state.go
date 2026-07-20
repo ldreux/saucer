@@ -7,13 +7,13 @@ import (
 )
 
 // PersistedState is the small slice of app state remembered across
-// restarts: last-used mode, theme, weather setting, and compact level.
+// restarts: last-used mode, theme, background animation, and compact level.
 // Nothing else (running timers) is persisted.
 type PersistedState struct {
-	Mode         string `json:"mode"`
-	Theme        string `json:"theme"`
-	Weather      string `json:"weather"`
-	CompactLevel string `json:"compactLevel"`
+	Mode                string `json:"mode"`
+	Theme               string `json:"theme"`
+	BackgroundAnimation string `json:"backgroundAnimation"`
+	CompactLevel        string `json:"compactLevel"`
 }
 
 func statePath() (string, error) {
@@ -44,15 +44,15 @@ func LoadState() PersistedState {
 	return s
 }
 
-// ApplyPersistedState applies a previously saved mode/weather/compact-level
-// preference on top of a freshly constructed Model. Unrecognized or empty
-// values are left at whatever New already set.
+// ApplyPersistedState applies a previously saved mode/background-animation/
+// compact-level preference on top of a freshly constructed Model.
+// Unrecognized or empty values are left at whatever New already set.
 func (m *Model) ApplyPersistedState(s PersistedState) {
 	if mo, ok := modeFromString(s.Mode); ok {
 		m.mode = mo
 	}
-	if we, ok := weatherKindFromString(s.Weather); ok {
-		m.weather = we
+	if a, ok := bgAnimKindFromString(s.BackgroundAnimation); ok {
+		m.bgAnim = a
 	}
 	if lvl, ok := compactLevelFromString(s.CompactLevel); ok {
 		m.compactLevel = lvl
@@ -71,10 +71,10 @@ func saveState(m Model) {
 		return
 	}
 	data, err := json.Marshal(PersistedState{
-		Mode:         m.mode.String(),
-		Theme:        m.theme.Name,
-		Weather:      m.weather.String(),
-		CompactLevel: m.compactLevel.String(),
+		Mode:                m.mode.String(),
+		Theme:               m.theme.Name,
+		BackgroundAnimation: m.bgAnim.String(),
+		CompactLevel:        m.compactLevel.String(),
 	})
 	if err != nil {
 		return
@@ -96,16 +96,18 @@ func modeFromString(s string) (mode, bool) {
 	return modePomodoro, false
 }
 
-func weatherKindFromString(s string) (weatherKind, bool) {
+func bgAnimKindFromString(s string) (bgAnimKind, bool) {
 	switch s {
 	case "off":
-		return weatherOff, true
+		return bgAnimOff, true
 	case "rain":
-		return weatherRain, true
-	case "snow":
-		return weatherSnow, true
+		return bgAnimRain, true
+	case "snake":
+		return bgAnimSnake, true
+	case "tetris":
+		return bgAnimTetris, true
 	}
-	return weatherOff, false
+	return bgAnimOff, false
 }
 
 func compactLevelFromString(s string) (compactLevel, bool) {
